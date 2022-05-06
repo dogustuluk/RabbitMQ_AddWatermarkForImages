@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
 using RabbitMQWeb.Watermark.Models;
+using RabbitMQWeb.Watermark.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,8 @@ namespace RabbitMQWeb.Watermark
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(serviceProvider => new ConnectionFactory { Uri = new Uri(Configuration.GetConnectionString("RabbitMQ")) });
+
+            services.AddSingleton<RabbitMQClientService>();
 
             services.AddDbContext<AppDbContext>(options =>
             {
