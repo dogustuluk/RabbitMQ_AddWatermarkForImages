@@ -1,21 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQWeb.Watermark.Models;
+using RabbitMQWeb.Watermark.Services;
 
 namespace RabbitMQWeb.Watermark.Controllers
 {
     public class ProductsController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly RabbitMQPublisher _rabbitMQPublisher; //event'i fırlatmak için yazmamız gerekmekte
 
-        public ProductsController(AppDbContext context)
+        public ProductsController(AppDbContext context, RabbitMQPublisher rabbitMQPublisher)
         {
             _context = context;
+            _rabbitMQPublisher = rabbitMQPublisher;
         }
 
         // GET: Products
@@ -53,14 +58,37 @@ namespace RabbitMQWeb.Watermark.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Price,Stock,PictureUrl")] Product product)
+        public async Task<IActionResult> Create([Bind("Id,Name,Price,Stock,ImageName")] Product product, IFormFile ImageFile)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(product); //kontrolü en başta yapıyoruz çünkü aşağıya geçildiğinde kod okunabilirliğinin artmasını istiyoruz.
+
+            if (ImageFile is {Length:>0 }) 
             {
+                //Guid ile rastgele string bir ifade oluşuyor.
+                //rastgele oluşan string ifadenin bir de uzantısı olması gerekiyor. Gerekli olan uzantıyı Path ile dosyadan alıyoruz.
+                //GetExtension >>> Dosyanın sadece uzantısını almaya yarayan metot.
+                var randomImageName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName); // Path.GetExtension(ImageFile.FileName) >>> kodu ile ".jpg" ".png" kısmı gelir. "." nokta koymaya gerek olmaz
+
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", randomImageName); //Dosyanın nereye kaydedileceğini belirttiğimiz kod
+
+                await using FileStream stream = new(path, FileMode.Create); //C# 9.0'la gelen özellik sayesinde "new" dedikten sonra "FileStream" yazmamıza gerek yok.
+                //c# 9.0 ile eğer sol tarafta tip belli ise sağ tarafta direkt olarak new anahtar sözcüğü ile devam edebiliriz.
+                //FileMode.Create ile yeni bir dosya oluşturacağımızı belli ediyoruz.
+                //henüz dosya oluşmuyor bu kod ile
+
+                
+                await ImageFile.CopyToAsync(stream); //resmi "stream"e kopyalamış olduk
+
+                _rabbitMQPublisher.Publish(new ProductImageCreatedEvent() { ImageName = randomImageName  }); //event'i fırlatmış olduk
+
+                product.ImageName = randomImageName;
+            }
+
+            
                 _context.Add(product);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
-            }
+            
             return View(product);
         }
 
