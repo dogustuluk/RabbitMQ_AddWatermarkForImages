@@ -49,7 +49,7 @@ namespace RabbitMQWeb.Watermark.BackgroundServices
 
         private Task Consumer_Received(object sender, BasicDeliverEventArgs @event)
         { //Resme image ekleme işlemi bu method'ta yapılmaktadır.
-            Task.Delay(5000).Wait(); //5sn gecikmeli çalışması için
+            //Task.Delay(5000).Wait(); //5sn gecikmeli çalışması için
 
             try
             {
@@ -58,7 +58,7 @@ namespace RabbitMQWeb.Watermark.BackgroundServices
                     //veri tipinde olması lazım. Deserialize ile object veri tipine dönüştürmüş oluyoruz.
                 (Encoding.UTF8.GetString(@event.Body.ToArray())); //buradan "wwwroot/Images" içerisindeki resmin ismi geliyor
 
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Images", ProductImageCreatedEvent.ImageName); //Varolan resmi çekmek için gerekli kod.
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", ProductImageCreatedEvent.ImageName); //Varolan resmi çekmek için gerekli kod.
 
                 var siteName = "www.RabbitDogus.com";
 
@@ -77,7 +77,7 @@ namespace RabbitMQWeb.Watermark.BackgroundServices
 
                 graphic.DrawString(siteName, font, brush, position); // çizim yapıldı
 
-                img.Save("wwwroot/Images/watermarks" + ProductImageCreatedEvent.ImageName);
+                img.Save("wwwroot/images/watermarks/"+ ProductImageCreatedEvent.ImageName);
 
                 img.Dispose(); //image'ın bellekte yer kaplamaması için dispose ediyoruz
                 graphic.Dispose(); //graphic'in bellekte yer kaplamaması için dispose ediyoruz
