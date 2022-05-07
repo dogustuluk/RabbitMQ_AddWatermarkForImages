@@ -49,6 +49,8 @@ namespace RabbitMQWeb.Watermark.BackgroundServices
 
         private Task Consumer_Received(object sender, BasicDeliverEventArgs @event)
         { //Resme image ekleme işlemi bu method'ta yapılmaktadır.
+            Task.Delay(5000).Wait(); //5sn gecikmeli çalışması için
+
             try
             {
                 //@event ile byte dizini gelecek, onu string'e çeviriyoruz
