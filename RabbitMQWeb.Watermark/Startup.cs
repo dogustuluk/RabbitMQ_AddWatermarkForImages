@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
+using RabbitMQWeb.Watermark.BackgroundServices;
 using RabbitMQWeb.Watermark.Models;
 using RabbitMQWeb.Watermark.Services;
 using System;
@@ -37,6 +38,8 @@ namespace RabbitMQWeb.Watermark
             {
                 options.UseInMemoryDatabase(databaseName: "productDb");
             });
+
+            services.AddHostedService<ImageWatermarkProcessBackgroundService>();
 
             services.AddControllersWithViews();
         }
