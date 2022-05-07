@@ -87,7 +87,7 @@ namespace RabbitMQWeb.Watermark.BackgroundServices
             catch (Exception ex)
             {
 
-                throw;
+                _logger.LogError(ex.Message);
             }
 
             return Task.CompletedTask;
